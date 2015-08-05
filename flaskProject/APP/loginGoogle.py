@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import imaplib, email, re
+import imaplib, re
 from connecting import *
 from listMail import *
 from mailActions import *
@@ -42,7 +42,7 @@ if __name__ == '__main__':
 
         print; print 'FETCH MAIL:'
         fetched_mail = fetch_mail(
-            connection, msg_ids, selected_mailbox, verbose=True)
+            connection, msg_ids, selected_mailbox='', criteria='ALL', verbose=True)
 
         close_mailbox(connection)
         logout(connection)

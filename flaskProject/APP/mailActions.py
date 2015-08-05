@@ -1,3 +1,5 @@
+import email
+
 def select_mailbox(connection, mailbox='inbox', verbose=False):
     if verbose: print "Selecting mailbox '"+mailbox+"'..."
     # connect to inbox by default.
@@ -24,58 +26,56 @@ def search_mail(connection,
         print 'Message IDs:', msg_ids
     print msg_ids[0]
     msg_ids = msg_ids[0].split()
+    print msg_ids
     return result, msg_ids
 
 def fetch_mail(connection, msg_ids, selected_mailbox='', criteria='', verbose=False):
     # connect.fetch(msg_ids, message_portions)
-    if criteria == '':
-        print 'No search criteria given.'
-    if selected_mailbox == '':
-        print 'No mailbox selected.'
-    else:
-        print 'Fetching mail from "'+selected_mailbox+'"...'
+    def fetch_all():
+        print "Fetching all..."
+        for id in msg_ids:
+            try:
+                print
+                result, msg_data = connection.fetch(id,"(RFC822)")
+                print 'Message ID:',id
+                msg = email.message_from_string(msg_data[0][1])
+                print "From: \t\t"+msg["FROM"]
+                print "To: \t\t"+msg["TO"]
+                print "Date: \t\t"+msg["DATE"]
+                print "Subject: \t"+msg["SUBJECT"]
+            except Exception, e:
+                print "-- Failed to fetch all --"
+                print e
+
+    if verbose:
+        if criteria == '':
+            print 'No search criteria given.'
+        if criteria == 'ALL':
+            fetch_all()
+        if selected_mailbox == '':
+            print 'No mailbox selected.'
+        else:
+            print 'Fetching mail from "'+selected_mailbox+'"...'
         # TODO
 
-#        result, msg_data = []
-        print "#####"
-        print msg_ids
-        print "#####"
-        for id in msg_ids:
-            result, msg_data = connection.fetch(id, '(BODY.PEEK[HEADER])')
-            print 'ID:',id
-            for response_part in msg_data:
-                if isinstance(response_part, tuple):
-                    print response_part[1]
-            print; print 'Printing fetched_data['+id+']...'
+
+
+#        for response_part in msg_data:
+#            if isinstance(response_part, tuple):
+#                print response_part[1]
         
-#    # Defaults to fetching 5 latest emails
-#    if verbose: print 'Fetching mail...'
-#    result, search_data = search_mail(connection, verbose=False)
-#    if criteria == '':
-#        result, search_data = fetch_latest_emails(connection,search_data, verbose)
-#        print "Testing fetch_latest_emails( VERBOSE ) verbose =", verbose
-#    print; print 'search_data:'
-#    print search_data
-#    if search_data[0]:
-#        fetched_mail_ids = search_data[0]
-#        print 'search_data[0] = '+ search_data[0]
-#        fetched_mail_ids = ids.split() # ids is a space separated string
-#        print 'fetched_mail_ids: ', fetched_mail_ids
-#        for ids in fetched_mail_ids:
-#            try:
-#                result, requestedList = mail.fetch(ids,"(RFC822)")
-#                msg = email.message_from_string(data[0][1])
-#                print "From: "
-#                print msg["FROM"]
-#                print "Subject: "
-#                print msg["SUBJECT"]
-#                print "Date: "
-#                print msg["DATE"]
-#                print "Text: "
-#                print msg["TEXT"]
-#                print
-#            except Exception, e:
-#                print e
+
+    # Defaults to fetching 5 latest emails
+        fetched_mail_ids = search_data[0]
+        print 'search_data[0] = '+ search_data[0]
+        fetched_mail_ids = ids.split() # ids is a space separated string
+        print 'fetched_mail_ids: ', fetched_mail_ids
+        for ids in fetched_mail_ids:
+            try:
+                result, requestedList = mail.fetch(ids,"(RFC822)")
+                msg = email.message_from_string(data[0][1])
+            except Exception, e:
+                print e
 
     return msg_data
 
