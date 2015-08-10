@@ -9,14 +9,6 @@ from pprint import pprint
 print; print 'Starting...'; print
 
 svdir = '/tmp'
-list_response_pattern = re.compile(
-    r'\((?P<flags>.*?)\) "(?P<delimiter>.*)" (?P<name>.*)')
-
-
-def parse_list_response(line):
-    flags, delimiter, mailbox = list_response_pattern.match(line).groups()
-    mailbox = mailbox.strip('"')
-    return (flags, delimiter, mailbox)
 
 def logout(connection):
     print "Logging out..."

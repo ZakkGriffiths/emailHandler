@@ -1,4 +1,10 @@
-import email
+import email, re
+
+def parse_list_response(line):
+    list_response_pattern = re.compile(r'\((?P<flags>.*?)\) "(?P<delimiter>.*)" (?P<name>.*)')
+    flags, delimiter, mailbox = list_response_pattern.match(line).groups()
+    mailbox = mailbox.strip('"')
+    return (flags, delimiter, mailbox)
 
 def select_mailbox(connection, mailbox='inbox', verbose=False):
     if verbose: print "Selecting mailbox '"+mailbox+"'..."

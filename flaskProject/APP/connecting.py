@@ -5,7 +5,7 @@ def open_connection(verbose=False):
     config = ConfigParser.ConfigParser()
     config.read([os.path.expanduser('~/.zakkGmailConfig.ini')])
 
-    # Connect to server
+    # Connect to server -- NOTE: .ini fields are CASE-sensitive
     hostname = config.get('Server', 'hostname')
     if verbose: print 'Connecting to', hostname
     connection = imaplib.IMAP4_SSL(hostname)
