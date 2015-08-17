@@ -1,4 +1,6 @@
-import email, re
+import email, re, os
+
+svdir = '/tmp/'
 
 def parse_list_response(line):
     list_response_pattern = re.compile(r'\((?P<flags>.*?)\) "(?P<delimiter>.*)" (?P<name>.*)')
@@ -17,7 +19,7 @@ def select_mailbox(connection, mailbox='inbox', verbose=False):
 
 def search_mail(connection,
                 mailbox='',
-                criteria='(from "Richard Hayes" since "01-May-2015")',
+                criteria='(from "Richard Hayes" since "01-Aug-2015")',
                 verbose=False):
     # TODO -- provide search options; accept string
     
@@ -30,15 +32,37 @@ def search_mail(connection,
     if verbose:
         print 'Mailbox:', mailbox
         print 'Message IDs:', msg_ids
-    print msg_ids[0]
+    #print msg_ids[0]
     msg_ids = msg_ids[0].split()
-    print msg_ids
+    #print msg_ids
     return result, msg_ids
 
 def fetch_mail(connection, msg_ids, selected_mailbox='', criteria='', verbose=False):
     # connect.fetch(msg_ids, message_portions)
-    def fetch_all():
-        print "Fetching all..."
+
+#    def get_messages(msg_ids):
+#        for id in msg_ids[0].split():
+#            result, msg_data = c.fetch(id,'(RFC822)')
+#            msg = email.message_from_string(msg_data[0][1])
+#            result, data = c.store(id,'-FLAGS','\\Seen')
+#            yield msg
+
+    basic_fetch = False;
+    if verbose:
+        if criteria == '':
+            print 'No fetch criteria given. Defaulting to basic header fetch.'
+            basic_fetch=True
+        if selected_mailbox == '':
+            print 'No mailbox selected.'
+        else:
+            print 'Fetching mail from "'+selected_mailbox+'", using criteria:'
+            if basic_fetch:
+                print '(FROM TO DATE SUBJECT)'
+            else:
+                print criteria+'...'
+
+    def fetch_basic():
+        print "Fetching basic headers..."
         for id in msg_ids:
             try:
                 print
@@ -53,35 +77,42 @@ def fetch_mail(connection, msg_ids, selected_mailbox='', criteria='', verbose=Fa
                 print "-- Failed to fetch all --"
                 print e
 
-    if verbose:
-        if criteria == '':
-            print 'No search criteria given.'
-        if criteria == 'ALL':
-            fetch_all()
-        if selected_mailbox == '':
-            print 'No mailbox selected.'
-        else:
-            print 'Fetching mail from "'+selected_mailbox+'"...'
-        # TODO
+    if criteria == '':
+        fetch_basic()
 
-
-
-#        for response_part in msg_data:
-#            if isinstance(response_part, tuple):
-#                print response_part[1]
-        
 
     # Defaults to fetching 5 latest emails
-        fetched_mail_ids = search_data[0]
-        print 'search_data[0] = '+ search_data[0]
-        fetched_mail_ids = ids.split() # ids is a space separated string
-        print 'fetched_mail_ids: ', fetched_mail_ids
-        for ids in fetched_mail_ids:
-            try:
-                result, requestedList = mail.fetch(ids,"(RFC822)")
-                msg = email.message_from_string(data[0][1])
-            except Exception, e:
-                print e
+    fetched_mail_ids = msg_ids[0]
+    print 'msg_ids[0] = '+ msg_ids[0]
+    fetched_mail_ids = msg_ids[0].split() # ids is a space separated string
+    print 'fetched_mail_ids: ', fetched_mail_ids
+    for ids in fetched_mail_ids:
+        try:
+            result, msg_data = connection.fetch(ids,"(RFC822)")
+            msg = email.message_from_string(msg_data[0][1])
+            # NOTE: fetched_data[0][1] is assumed to be the body
+
+            if msg.get_content_maintype() != 'multipart':
+                continue
+
+            for part in msg.walk():
+                if part.get_content_maintype() == 'multipart':
+                    continue
+                if part.get('Content-Disposition') is None:
+                    continue
+
+                filename = part.get_filename()
+                if filename is not None:
+                    sv_path = os.path.join(svdir, filename)
+                    if not os.path.isfile(sv_path):
+                        print sv_path
+                        fp = open(sv_path, 'wb')
+                        fp.write(part.get_payload(decode=True))
+                        fp.close()
+
+
+        except Exception, e:
+            print e
 
     return msg_data
 
